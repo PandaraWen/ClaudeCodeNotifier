@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "onAssistantMessage": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "if echo \"$ASSISTANT_MESSAGE\" | grep -iE '(decide|choose|select|which|would you|do you want|prefer|please|you)' > /dev/null; then ~/.claude-code-notifier/notify.sh input; fi"
+      ],
+      "description": "Detect if Claude needs user input or choice and send notification"
+    },
+    "onToolUse": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "case \"$TOOL_NAME\" in TodoWrite) if echo \"$TOOL_RESULT\" | grep -qE 'completed.*100%|all.*completed'; then ~/.claude-code-notifier/notify.sh complete; fi ;; *) ;; esac"
+      ],
+      "description": "Detect when all tasks are completed and send notification"
+    },
+    "onError": {
+      "command": "~/.claude-code-notifier/notify.sh",
+      "args": ["error"],
+      "description": "Send notification when error occurs"
+    }
+  }
+}
