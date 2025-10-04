@@ -71,10 +71,72 @@ else
     print_warn "Cannot create symlink, run manually: sudo ln -sf $CONFIG_DIR/notify.sh /usr/local/bin/claude-notify"
 fi
 
-# 7. Download or create a simple icon (optional)
-print_info "Setting up notification icon..."
-# Can download an icon here, or use system default icon
-# Skipping for now, using terminal-notifier's default icon
+# 7. Configure Claude Code hooks
+CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+print_info "Configuring Claude Code hooks..."
+
+if [ -f "$CLAUDE_CONFIG" ]; then
+    # Backup existing config
+    BACKUP_CONFIG="${CLAUDE_CONFIG}.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$CLAUDE_CONFIG" "$BACKUP_CONFIG"
+    print_info "Backed up existing config to: $BACKUP_CONFIG"
+
+    # Check if hooks already exist
+    if grep -q '"hooks"' "$CLAUDE_CONFIG"; then
+        print_warn "Hooks configuration already exists in Claude Code config"
+        echo "Your existing hooks have been preserved."
+        echo "To manually add notifications, see: $SCRIPT_DIR/hooks-config-example.json"
+    else
+        # Add hooks using python3 (available on all macOS)
+        python3 -c "
+import json
+import sys
+
+config_file = '$CLAUDE_CONFIG'
+notify_script = '$CONFIG_DIR/notify.sh'
+
+# Read existing config
+with open(config_file, 'r') as f:
+    config = json.load(f)
+
+# Add hooks configuration
+config['hooks'] = {
+    'onAssistantMessage': {
+        'command': 'bash',
+        'args': [
+            '-c',
+            f'if echo \"\$ASSISTANT_MESSAGE\" | grep -iE \"(decide|choose|select|which|would you|do you want|prefer|please.*you)\" > /dev/null; then {notify_script} input; fi'
+        ],
+        'description': 'Detect if Claude needs user input or choice and send notification'
+    },
+    'onToolUse': {
+        'command': 'bash',
+        'args': [
+            '-c',
+            f'case \"\$TOOL_NAME\" in TodoWrite) if echo \"\$TOOL_RESULT\" | grep -qE \"completed.*100%|all.*completed\"; then {notify_script} complete; fi ;; *) ;; esac'
+        ],
+        'description': 'Detect when all tasks are completed and send notification'
+    },
+    'onError': {
+        'command': notify_script,
+        'args': ['error'],
+        'description': 'Send notification when error occurs'
+    }
+}
+
+# Write updated config
+with open(config_file, 'w') as f:
+    json.dump(config, f, indent=2)
+    f.write('\n')
+"
+        print_info "Hooks configuration added to Claude Code config"
+        print_warn "Please restart Claude Code for the hooks to take effect"
+    fi
+else
+    print_warn "Claude Code config file not found at: $CLAUDE_CONFIG"
+    echo "Please create the config file and add hooks manually."
+    echo "See example at: $SCRIPT_DIR/hooks-config-example.json"
+fi
 
 # 8. Test notification
 print_info "Sending test notification..."
@@ -85,16 +147,11 @@ print_info "========================================"
 print_info "Installation Complete!"
 print_info "========================================"
 echo ""
-echo "Next steps:"
-echo "1. Configure Claude Code hooks by adding the following to your Claude Code config file"
+print_info "Next steps:"
+echo "1. Restart Claude Code to activate the notification hooks"
+echo "2. Test by asking Claude a question that requires your input"
 echo ""
-echo "Config file location:"
-echo "  macOS: ~/Library/Application Support/Claude/claude_desktop_config.json"
-echo ""
-echo "Or run the following command to see hooks configuration example:"
-echo "  cat $SCRIPT_DIR/README.md"
-echo ""
-print_info "You can test notifications with these commands:"
+print_info "You can test notifications manually with these commands:"
 echo "  $CONFIG_DIR/notify.sh input"
 echo "  $CONFIG_DIR/notify.sh choice"
 echo "  $CONFIG_DIR/notify.sh complete"

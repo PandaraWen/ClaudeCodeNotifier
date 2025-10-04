@@ -20,6 +20,8 @@ The tool consists of three main components working together:
    - Detects and installs dependencies (Homebrew, terminal-notifier)
    - Copies notify.sh to `~/.claude-code-notifier/`
    - Creates optional global symlink at `/usr/local/bin/claude-notify`
+   - **Automatically configures Claude Code hooks** (backs up existing config first)
+   - Detects existing hooks and preserves them
    - Self-tests by sending a notification
 
 3. **hooks-config-example.json** - Claude Code integration template
@@ -33,7 +35,9 @@ The tool consists of three main components working together:
 
 **Notification Triggering**: The onAssistantMessage hook uses regex pattern matching against `$ASSISTANT_MESSAGE` to detect keywords like "choose", "select", "would you", "do you want" that indicate Claude needs user input.
 
-**Installation Flow**: The install script is idempotent - it checks for existing installations and only installs/configures what's missing.
+**Installation Flow**: The install script is idempotent - it checks for existing installations and only installs/configures what's missing. It uses Python 3 (pre-installed on macOS) to safely merge hooks configuration into the existing Claude Code config JSON, preserving any existing settings.
+
+**Automatic Hook Configuration**: The installer detects if hooks already exist in the Claude Code config. If they do, it preserves them and notifies the user. If not, it adds the notification hooks automatically. All config changes are backed up with timestamps before modification.
 
 ## Testing
 

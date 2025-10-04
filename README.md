@@ -39,7 +39,10 @@ The installation script will automatically complete the following steps:
 3. Copy scripts to the configuration directory `~/.claude-code-notifier/`
 4. Set execution permissions
 5. Create global command `claude-notify` (requires permissions)
-6. Send a test notification to confirm successful installation
+6. **Automatically configure Claude Code hooks** (backs up existing config)
+7. Send a test notification to confirm successful installation
+
+**Important**: After installation, **restart Claude Code** for the hooks to take effect.
 
 ### Manual Installation
 
@@ -62,16 +65,21 @@ sudo ln -s ~/.claude-code-notifier/notify.sh /usr/local/bin/claude-notify
 
 ## Configuring Claude Code Hooks
 
-After installation, you need to configure Claude Code hooks to automatically trigger notifications.
+**The installation script automatically configures the hooks for you!** You only need to restart Claude Code.
+
+If you have existing hooks or want to manually configure, see below.
 
 ### Config File Location
 
 Claude Code configuration file location:
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
+**Note**: The installer backs up your config before making changes to:
+`~/Library/Application Support/Claude/claude_desktop_config.json.backup.YYYYMMDD_HHMMSS`
+
 ### Hook Configuration Example
 
-Add the following hooks to your configuration file:
+If you need to manually add hooks, use the following configuration:
 
 ```json
 {
