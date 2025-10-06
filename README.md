@@ -29,7 +29,7 @@ This tool operates through the following mechanisms:
 Run the installation script:
 
 ```bash
-cd /Users/Gowen/WorkSpace/ClaudeCodeTools
+cd ClaudeCodeNotifier
 ./install.sh
 ```
 
@@ -72,10 +72,10 @@ If you have existing hooks or want to manually configure, see below.
 ### Config File Location
 
 Claude Code configuration file location:
-- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- macOS: `~/.claude/settings.json`
 
 **Note**: The installer backs up your config before making changes to:
-`~/Library/Application Support/Claude/claude_desktop_config.json.backup.YYYYMMDD_HHMMSS`
+`~/.claude/settings.json.backup.YYYYMMDD_HHMMSS`
 
 ### Hook Configuration Example
 
@@ -84,48 +84,26 @@ If you need to manually add hooks, use the following configuration:
 ```json
 {
   "hooks": {
-    "onAssistantMessage": {
-      "command": "bash",
-      "args": [
-        "-c",
-        "if echo \"$ASSISTANT_MESSAGE\" | grep -iE '(you|please|choose|provide|need.*information|which|would you|do you want|prefer)' > /dev/null; then ~/.claude-code-notifier/notify.sh input; fi"
-      ],
-      "description": "Detect if Claude needs user input or choice"
-    },
-    "onToolUse": {
-      "command": "bash",
-      "args": [
-        "-c",
-        "if [ \"$TOOL_NAME\" = \"TodoWrite\" ] && echo \"$TOOL_RESULT\" | grep -E '(completed|complete)' > /dev/null; then ~/.claude-code-notifier/notify.sh complete; fi"
-      ],
-      "description": "Detect when task is completed"
-    },
-    "onError": {
-      "command": "~/.claude-code-notifier/notify.sh",
-      "args": ["error"],
-      "description": "Notify on error"
-    }
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude-code-notifier/notify.sh input"
+          }
+        ],
+        "description": "Send notification when Claude needs tool permission or input is idle for 60+ seconds"
+      }
+    ]
   }
 }
 ```
 
-### Simpler Configuration (Recommended for Beginners)
+**How it works**: The Notification hook is triggered automatically by Claude Code when:
+1. Claude needs permission to use a tool
+2. The prompt input has been idle for 60+ seconds
 
-If the above configuration is too complex, you can use this simplified version:
-
-```json
-{
-  "hooks": {
-    "onAssistantMessage": {
-      "command": "~/.claude-code-notifier/notify.sh",
-      "args": ["input"],
-      "description": "Notify when Claude sends a message"
-    }
-  }
-}
-```
-
-**Note**: This simplified version will send a notification every time Claude replies, which may be quite frequent.
+This provides timely notifications without being too intrusive.
 
 ### Advanced Configuration Options
 

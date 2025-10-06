@@ -25,15 +25,15 @@ The tool consists of three main components working together:
    - Self-tests by sending a notification
 
 3. **hooks-config-example.json** - Claude Code integration template
-   - Demonstrates hook patterns for onAssistantMessage, onToolUse, onError
-   - Uses grep with regex to detect when Claude needs user input
-   - Final configuration goes in `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Demonstrates the Notification hook configuration format
+   - Shows how to integrate with Claude Code's hook system
+   - Final configuration goes in `~/.claude/settings.json`
 
 ## Key Design Decisions
 
 **Path Detection**: Scripts use `command -v` instead of hardcoded paths to support both Intel (`/usr/local/bin`) and Apple Silicon (`/opt/homebrew/bin`) Homebrew installations.
 
-**Notification Triggering**: The onAssistantMessage hook uses regex pattern matching against `$ASSISTANT_MESSAGE` to detect keywords like "choose", "select", "would you", "do you want" that indicate Claude needs user input.
+**Notification Triggering**: The Notification hook is triggered automatically by Claude Code in two scenarios: (1) when Claude needs permission to use a tool, (2) when the prompt input has been idle for 60+ seconds. This provides timely notifications when user attention is needed.
 
 **Installation Flow**: The install script is idempotent - it checks for existing installations and only installs/configures what's missing. It uses Python 3 (pre-installed on macOS) to safely merge hooks configuration into the existing Claude Code config JSON, preserving any existing settings.
 
@@ -67,12 +67,12 @@ Test the installation:
 
 2. **Path Assumptions**: Never hardcode `/usr/local/bin/terminal-notifier` - always use `command -v terminal-notifier` or call `terminal-notifier` directly to let PATH resolution work.
 
-3. **Hook Configuration**: The hooks config uses environment variables like `$ASSISTANT_MESSAGE`, `$TOOL_NAME`, `$TOOL_RESULT` provided by Claude Code. These must be properly quoted in shell commands.
+3. **Hook Configuration**: Claude Code hooks use a specific format with "type": "command" and receive JSON input via stdin. The hook receives data including session_id, transcript_path, cwd, hook_event_name, and message fields.
 
-4. **Regex Patterns**: When updating keyword detection, remember to escape special regex characters and test with actual Claude Code output.
+4. **Hook Types**: Available hooks include Notification, Stop, PreToolUse, PostToolUse, UserPromptSubmit, SubagentStop, PreCompact, SessionStart, and SessionEnd. The Notification hook is ideal for detecting when user input is needed.
 
 ## File Locations After Installation
 
 - `~/.claude-code-notifier/notify.sh` - Installed notification script
 - `/usr/local/bin/claude-notify` - Optional global command (symlink)
-- `~/Library/Application Support/Claude/claude_desktop_config.json` - User's Claude Code config (where hooks are added)
+- `~/.claude/settings.json` - Claude Code CLI settings file (where hooks are added)

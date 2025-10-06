@@ -72,7 +72,7 @@ else
 fi
 
 # 7. Configure Claude Code hooks
-CLAUDE_CONFIG="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+CLAUDE_CONFIG="$HOME/.claude/settings.json"
 print_info "Configuring Claude Code hooks..."
 
 if [ -f "$CLAUDE_CONFIG" ]; then
@@ -99,29 +99,19 @@ notify_script = '$CONFIG_DIR/notify.sh'
 with open(config_file, 'r') as f:
     config = json.load(f)
 
-# Add hooks configuration
+# Add hooks configuration using Claude Code format
 config['hooks'] = {
-    'onAssistantMessage': {
-        'command': 'bash',
-        'args': [
-            '-c',
-            f'if echo \"\$ASSISTANT_MESSAGE\" | grep -iE \"(decide|choose|select|which|would you|do you want|prefer|please.*you)\" > /dev/null; then {notify_script} input; fi'
-        ],
-        'description': 'Detect if Claude needs user input or choice and send notification'
-    },
-    'onToolUse': {
-        'command': 'bash',
-        'args': [
-            '-c',
-            f'case \"\$TOOL_NAME\" in TodoWrite) if echo \"\$TOOL_RESULT\" | grep -qE \"completed.*100%|all.*completed\"; then {notify_script} complete; fi ;; *) ;; esac'
-        ],
-        'description': 'Detect when all tasks are completed and send notification'
-    },
-    'onError': {
-        'command': notify_script,
-        'args': ['error'],
-        'description': 'Send notification when error occurs'
-    }
+    'Notification': [
+        {
+            'hooks': [
+                {
+                    'type': 'command',
+                    'command': f'{notify_script} input'
+                }
+            ],
+            'description': 'Send notification when Claude needs tool permission or waits for input'
+        }
+    ]
 }
 
 # Write updated config
