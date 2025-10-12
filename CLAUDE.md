@@ -33,7 +33,11 @@ The tool consists of three main components working together:
 
 **Path Detection**: Scripts use `command -v` instead of hardcoded paths to support both Intel (`/usr/local/bin`) and Apple Silicon (`/opt/homebrew/bin`) Homebrew installations.
 
-**Notification Triggering**: The Notification hook is triggered automatically by Claude Code in two scenarios: (1) when Claude needs permission to use a tool, (2) when the prompt input has been idle for 60+ seconds. This provides timely notifications when user attention is needed.
+**Notification Triggering**: The tool uses two types of hooks for comprehensive notification coverage:
+- **Notification hook**: Triggered when Claude needs permission to use a tool or when the prompt input has been idle for 60+ seconds
+- **Stop hook**: Triggered when Claude completes a task and stops working, providing timely completion notifications
+
+This dual-hook approach ensures users are notified both when input is needed and when tasks are complete.
 
 **Installation Flow**: The install script is idempotent - it checks for existing installations and only installs/configures what's missing. It uses Python 3 (pre-installed on macOS) to safely merge hooks configuration into the existing Claude Code config JSON, preserving any existing settings.
 
@@ -76,3 +80,13 @@ Test the installation:
 - `~/.claude-code-notifier/notify.sh` - Installed notification script
 - `/usr/local/bin/claude-notify` - Optional global command (symlink)
 - `~/.claude/settings.json` - Claude Code CLI settings file (where hooks are added)
+- `~/.claude/commands/save.md` - Global /save command for saving progress
+
+## Global Commands
+
+**`/save` command**: A custom slash command that automates the workflow of documenting and committing project progress:
+1. Updates CLAUDE.md with recent changes and improvements
+2. Creates a git commit with an appropriate message
+3. Pushes changes to the remote repository
+
+This command helps maintain project documentation and ensures changes are regularly synced to version control.
